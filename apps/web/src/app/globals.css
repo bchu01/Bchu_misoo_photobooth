@@ -1,0 +1,29 @@
+@import 'tailwindcss';
+
+/*
+ * Deliberately plain. The later Figma pass owns typography, colour, spacing, and
+ * decoration; these tokens exist only so the functional build is legible and the
+ * theme has one place to change.
+ */
+@theme {
+  --color-surface: #ffffff;
+  --color-surface-muted: #f4f4f5;
+  --color-line: #d4d4d8;
+  --color-ink: #18181b;
+  --color-ink-muted: #52525b;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-surface-muted);
+  color: var(--color-ink);
+}
+
+/* Visible focus on every interactive element, not just where Tailwind adds it. */
+:focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 2px;
+}
