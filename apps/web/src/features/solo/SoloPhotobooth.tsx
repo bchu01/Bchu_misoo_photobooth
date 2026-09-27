@@ -12,6 +12,8 @@ import { CameraSettings } from '@/components/CameraSettings';
 import { PhotoStripPreview } from '@/components/PhotoStripPreview';
 import { StatusMessage } from '@/components/StatusMessage';
 import { Button } from '@/components/ui/Button';
+import { BoothShelf } from '@/components/brand/BoothShelf';
+import { BoothWindow } from '@/components/brand/BoothWindow';
 import { useCamera } from '@/features/camera/useCamera';
 import { captureStill, SOLO_CAPTURE_OPTIONS } from '@/features/capture/captureFrame';
 import { useCaptureSequence } from '@/features/capture/useCaptureSequence';
@@ -65,8 +67,15 @@ export function SoloPhotobooth() {
     }
   }, [completeSlots]);
 
+  const shutterLabel =
+    sequence.state === 'running'
+      ? 'Stop'
+      : sequence.state === 'complete' || sequence.state === 'error'
+        ? 'Retake'
+        : 'Take photos';
+
   return (
-    <div className="flex flex-col gap-6">
+    <main className="mx-auto flex w-full max-w-[1440px] flex-col items-center gap-6 px-3 py-8">
       {camera.failure ? (
         <StatusMessage
           tone="error"
@@ -81,51 +90,49 @@ export function SoloPhotobooth() {
           {camera.failure.message}
         </StatusMessage>
       ) : null}
-
       {sequence.error ? <StatusMessage tone="error">{sequence.error}</StatusMessage> : null}
       {downloadError ? <StatusMessage tone="error">{downloadError}</StatusMessage> : null}
 
-      {/* Reading order on narrow screens: settings, camera, strip, actions. */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(14rem,18rem)_minmax(0,1fr)_minmax(12rem,16rem)]">
-        <CameraSettings camera={camera} />
-
-        <div className="flex min-w-0 flex-col gap-4">
+      <BoothWindow
+        footer={
+          <BoothShelf
+            mode="solo"
+            shutterLabel={shutterLabel}
+            shutterDisabled={!canStart && sequence.state !== 'running'}
+            onShutter={sequence.state === 'running' ? sequence.reset : sequence.start}
+            downloadLabel={isSaving ? 'Preparing…' : 'Download'}
+            downloadDisabled={!completeSlots || isSaving}
+            onDownload={() => void handleDownload()}
+            note={sequence.state === 'running' ? 'Taking photos. Press the shutter to stop.' : undefined}
+          />
+        }
+      >
+        <div className="h-[42vh] min-h-64 max-h-[507px]">
           <CameraPreview
+            bare
             label="You"
             stream={camera.stream}
             mirrored={camera.mirrored}
             videoRef={videoRef}
             countdownSeconds={sequence.secondsRemaining}
-            badge={sequence.state === 'running' ? `Shot ${sequence.currentShot} of ${SHOTS_PER_SESSION}` : undefined}
+            badge={
+              sequence.state === 'running' ? `Shot ${sequence.currentShot} of ${SHOTS_PER_SESSION}` : undefined
+            }
             placeholder={
               camera.status === 'requesting' ? 'Waiting for camera permission…' : 'Camera is off.'
             }
           />
         </div>
+      </BoothWindow>
 
-        <PhotoStripPreview slots={slots} activeShot={sequence.currentShot || null} />
-      </div>
+      <PhotoStripPreview slots={slots} activeShot={sequence.currentShot || null} />
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-300 pt-4">
-        <div className="flex flex-wrap gap-3">
-          <Button variant="primary" onClick={sequence.start} disabled={!canStart}>
-            {sequence.state === 'complete' || sequence.state === 'error' ? 'Retake' : 'Take photos'}
-          </Button>
-          {sequence.state === 'running' ? (
-            <Button variant="secondary" onClick={sequence.reset}>
-              Stop
-            </Button>
-          ) : null}
+      <details className="w-[min(988px,calc(100%-1.5rem))] rounded-[28px] border border-black bg-[rgba(243,243,243,0.74)] p-4">
+        <summary className="cursor-pointer text-lg tracking-[-0.05em]">Camera</summary>
+        <div className="pt-4">
+          <CameraSettings camera={camera} />
         </div>
-
-        <Button
-          variant="primary"
-          onClick={() => void handleDownload()}
-          disabled={!completeSlots || isSaving}
-        >
-          {isSaving ? 'Preparing PNG…' : 'Download PNG'}
-        </Button>
-      </div>
-    </div>
+      </details>
+    </main>
   );
 }

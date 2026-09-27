@@ -20,6 +20,8 @@ export interface CameraPreviewProps {
   placeholder?: React.ReactNode;
   countdownSeconds?: number | null;
   badge?: string;
+  /** Fills the booth stage instead of drawing its own card. */
+  bare?: boolean;
 }
 
 export function CameraPreview({
@@ -30,6 +32,7 @@ export function CameraPreview({
   placeholder,
   countdownSeconds = null,
   badge,
+  bare = false,
 }: CameraPreviewProps) {
   const internalRef = useRef<HTMLVideoElement | null>(null);
   // The parent's ref wins when supplied, so it can capture frames from this element.
@@ -48,8 +51,14 @@ export function CameraPreview({
   }, [stream, elementRef]);
 
   return (
-    <figure className="flex min-w-0 flex-col gap-2">
-      <div className="relative aspect-3/4 w-full overflow-hidden rounded-md border border-zinc-300 bg-zinc-800">
+    <figure className={bare ? 'relative h-full min-h-56 w-full' : 'flex min-w-0 flex-col gap-2'}>
+      <div
+        className={
+          bare
+            ? 'relative h-full min-h-56 w-full overflow-hidden bg-[#d9d9d9]'
+            : 'relative aspect-3/4 w-full overflow-hidden rounded-md border border-zinc-300 bg-zinc-800'
+        }
+      >
         {stream ? (
           <video
             ref={elementRef}
@@ -60,7 +69,11 @@ export function CameraPreview({
             aria-label={`${label}, live camera`}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center p-4 text-center text-sm text-zinc-200">
+          <div
+            className={`flex h-full min-h-56 w-full items-center justify-center p-4 text-center text-sm ${
+              bare ? 'text-black' : 'text-zinc-200'
+            }`}
+          >
             {placeholder ?? 'No camera yet.'}
           </div>
         )}
@@ -74,10 +87,19 @@ export function CameraPreview({
         ) : null}
       </div>
 
-      <figcaption className="flex items-center justify-between gap-2 text-sm text-zinc-700">
-        <span className="font-medium">{label}</span>
-        {badge ? <span className="text-xs text-zinc-600">{badge}</span> : null}
-      </figcaption>
+      {bare ? (
+        <figcaption className="pointer-events-none absolute bottom-2 left-2 flex gap-2 text-xs">
+          <span className="rounded-full border border-black bg-white/80 px-2 py-1">{label}</span>
+          {badge ? (
+            <span className="rounded-full border border-black bg-white/80 px-2 py-1">{badge}</span>
+          ) : null}
+        </figcaption>
+      ) : (
+        <figcaption className="flex items-center justify-between gap-2 text-sm text-zinc-700">
+          <span className="font-medium">{label}</span>
+          {badge ? <span className="text-xs text-zinc-600">{badge}</span> : null}
+        </figcaption>
+      )}
     </figure>
   );
 }

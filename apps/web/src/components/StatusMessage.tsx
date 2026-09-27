@@ -8,9 +8,9 @@
 export type StatusTone = 'info' | 'error' | 'success';
 
 const TONE_STYLES: Record<StatusTone, string> = {
-  info: 'border-zinc-300 bg-white text-zinc-800',
-  error: 'border-red-400 bg-red-50 text-red-900',
-  success: 'border-green-500 bg-green-50 text-green-900',
+  info: 'border-black bg-white/90 text-black',
+  error: 'border-black bg-[#ffd6d6] text-black',
+  success: 'border-black bg-[#e7ffd4] text-black',
 };
 
 const TONE_PREFIX: Record<StatusTone, string> = {
@@ -29,7 +29,7 @@ export function StatusMessage({ tone = 'info', children, action }: StatusMessage
   return (
     <div
       role={tone === 'error' ? 'alert' : 'status'}
-      className={`flex flex-col gap-3 rounded-md border p-4 text-sm sm:flex-row sm:items-center sm:justify-between ${TONE_STYLES[tone]}`}
+      className={`flex flex-col gap-3 rounded-[21px] border p-4 text-sm tracking-[-0.05em] sm:flex-row sm:items-center sm:justify-between ${TONE_STYLES[tone]}`}
     >
       <p>
         <span className="font-semibold">{TONE_PREFIX[tone]}:</span> {children}

@@ -7,12 +7,12 @@ import type { ButtonHTMLAttributes } from 'react';
 export type ButtonVariant = 'primary' | 'secondary' | 'quiet';
 
 const BASE =
-  'inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-4 py-2 text-base font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex min-h-11 items-center justify-center gap-2 rounded-[21px] border border-black px-4 py-2 text-base tracking-[-0.05em] disabled:cursor-not-allowed disabled:opacity-40';
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'border-zinc-900 bg-zinc-900 text-white enabled:hover:bg-zinc-700',
-  secondary: 'border-zinc-400 bg-white text-zinc-900 enabled:hover:bg-zinc-100',
-  quiet: 'border-transparent bg-transparent text-zinc-700 underline enabled:hover:text-zinc-900',
+  primary: 'bg-linear-to-r from-[#efefef] to-[#b6b6b6] text-black',
+  secondary: 'bg-white text-black',
+  quiet: 'border-transparent bg-transparent text-black underline',
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

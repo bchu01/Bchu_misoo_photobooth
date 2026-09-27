@@ -42,18 +42,14 @@ export function PairStatus({ roomState, myRole, connectionLabel, onLeave }: Pair
   };
 
   return (
-    <section
-      aria-labelledby="pair-status-heading"
-      className="flex flex-col gap-3 rounded-md border border-zinc-300 bg-white p-4"
-    >
-      <h2 id="pair-status-heading" className="text-lg font-semibold">
+    <section aria-labelledby="pair-status-heading" className="flex flex-col gap-2 tracking-[-0.05em]">
+      <h2 id="pair-status-heading" className="sr-only">
         Room
       </h2>
 
       <div className="flex flex-wrap items-center gap-3">
         <p className="text-sm">
-          <span className="font-medium">Code:</span>{' '}
-          <span className="font-mono text-lg tracking-widest">{roomState.code}</span>
+          <span>Code:</span> <span className="font-mono text-lg tracking-[0.2em]">{roomState.code}</span>
         </p>
         <Button variant="secondary" onClick={() => void copyCode()}>
           {copied ? 'Copied' : 'Copy code'}
@@ -64,13 +60,8 @@ export function PairStatus({ roomState, myRole, connectionLabel, onLeave }: Pair
       </div>
 
       <p className="text-sm" aria-live="polite">
-        <span className="font-medium">Connection:</span> {connectionLabel}
+        {connectionLabel}. {participantLine('host', roomState.host, myRole)}. {participantLine('guest', roomState.guest, myRole)}.
       </p>
-
-      <ul className="flex flex-col gap-1 text-sm text-zinc-700">
-        <li>{participantLine('host', roomState.host, myRole)}</li>
-        <li>{participantLine('guest', roomState.guest, myRole)}</li>
-      </ul>
     </section>
   );
 }

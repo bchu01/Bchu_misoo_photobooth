@@ -23,22 +23,25 @@ export function PhotoStripPreview({ slots, activeShot = null }: PhotoStripPrevie
   const totalSlots = slots.length || SHOTS_PER_SESSION;
 
   return (
-    <section aria-labelledby="strip-heading" className="flex flex-col gap-3">
-      <h2 id="strip-heading" className="text-lg font-semibold">
+    <section
+      aria-labelledby="strip-heading"
+      className="mx-auto flex w-[min(16rem,calc(100%-1.5rem))] flex-col gap-3 rounded-[28px] border border-black bg-[rgba(243,243,243,0.74)] p-3"
+    >
+      <h2 id="strip-heading" className="text-center text-lg tracking-[-0.05em]">
         Photo strip
       </h2>
-      <p className="text-sm text-zinc-700" aria-live="polite">
+      <p className="text-center text-sm" aria-live="polite">
         {filledCount} of {totalSlots} frames captured.
       </p>
 
-      <ol className="mx-auto flex w-full max-w-56 flex-col gap-2 rounded-md border border-zinc-300 bg-zinc-100 p-2">
+      <ol className="flex flex-col gap-2 rounded-2xl border border-black bg-[#d9d9d9] p-2">
         {slots.map((slot, index) => {
           const shotNumber = index + 1;
           return (
             <li
               key={shotNumber}
-              className={`flex aspect-3/4 gap-1 overflow-hidden rounded bg-zinc-300 ${
-                activeShot === shotNumber ? 'ring-2 ring-zinc-900' : ''
+              className={`flex aspect-3/4 gap-1 overflow-hidden rounded-lg border border-black bg-[#cfcfcf] ${
+                activeShot === shotNumber ? 'ring-2 ring-black' : ''
               }`}
             >
               {slot ? (
@@ -55,7 +58,7 @@ export function PhotoStripPreview({ slots, activeShot = null }: PhotoStripPrevie
                   />
                 ))
               ) : (
-                <span className="flex h-full w-full items-center justify-center text-xs text-zinc-600">
+                <span className="flex h-full w-full items-center justify-center text-xs">
                   Frame {shotNumber}
                 </span>
               )}

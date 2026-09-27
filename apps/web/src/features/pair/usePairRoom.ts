@@ -12,7 +12,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { AckStage, Role, RoomError, RoomState } from '@bchu/shared';
+import type { AckStage, Role, RoomError, RoomMembership, RoomState } from '@bchu/shared';
 import { newEventId } from '@/lib/async';
 import { ensureConnected, getSocket, request, RequestError, type PhotoboothSocket } from '@/lib/socketClient';
 import { estimateClockOffset, ZERO_OFFSET, type ClockOffset } from './clockSync';
@@ -43,6 +43,38 @@ export interface PairRoomController {
   leave: () => Promise<void>;
 }
 
+/**
+ * One resume per code at a time. React Strict Mode runs the effect twice, and
+ * the server rotates the reconnect token on every resume, so a second in-flight
+ * call would present the token the first call just invalidated.
+ */
+const resumeInflight = new Map<string, Promise<RoomMembership>>();
+
+function resumeOnce(
+  socket: PhotoboothSocket,
+  code: string,
+  reconnectToken: string,
+): Promise<RoomMembership> {
+  const existing = resumeInflight.get(code);
+  if (existing) return existing;
+
+  const promise = (async () => {
+    await ensureConnected(socket);
+    const membership = await request(socket, 'room:resume', { code, reconnectToken });
+    savePairSession({
+      code: membership.code,
+      role: membership.role,
+      reconnectToken: membership.reconnectToken,
+    });
+    return membership;
+  })().finally(() => {
+    if (resumeInflight.get(code) === promise) resumeInflight.delete(code);
+  });
+
+  resumeInflight.set(code, promise);
+  return promise;
+}
+
 export function usePairRoom(code: string): PairRoomController {
   const socket = useMemo(() => getSocket(), []);
   const [connection, setConnection] = useState<RoomConnection>('connecting');
@@ -65,19 +97,9 @@ export function usePairRoom(code: string): PairRoomController {
       }
 
       try {
-        await ensureConnected(socket);
-        const membership = await request(socket, 'room:resume', {
-          code,
-          reconnectToken: stored.reconnectToken,
-        });
+        const membership = await resumeOnce(socket, code, stored.reconnectToken);
         if (cancelled || leftRef.current) return;
 
-        // The token rotates on every resume, so the stored copy must be replaced.
-        savePairSession({
-          code: membership.code,
-          role: membership.role,
-          reconnectToken: membership.reconnectToken,
-        });
         setRole(membership.role);
         setRoomState(membership.state);
         setError(null);

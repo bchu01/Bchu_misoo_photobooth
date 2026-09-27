@@ -8,9 +8,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SHOTS_PER_SESSION } from '@bchu/shared';
+import { BoothShelf } from '@/components/brand/BoothShelf';
+import { BoothWindow } from '@/components/brand/BoothWindow';
 import { CameraPreview } from '@/components/CameraPreview';
 import { CameraSettings } from '@/components/CameraSettings';
-import { PageShell } from '@/components/PageShell';
 import { PairStatus } from '@/components/PairStatus';
 import { PhotoStripPreview } from '@/components/PhotoStripPreview';
 import { StatusMessage } from '@/components/StatusMessage';
@@ -109,27 +110,27 @@ export function PairPhotobooth({ code }: { code: string }) {
 
   if (connection === 'unauthorized') {
     return (
-      <PageShell title="Pair" backHref="/pair">
+      <main className="mx-auto flex w-[min(720px,calc(100%-1.5rem))] justify-center py-16">
         <StatusMessage
           tone="error"
           action={
             <Button variant="primary" onClick={() => router.push('/pair')}>
-              Back to Pair
+              Back to Duo
             </Button>
           }
         >
-          This tab is not part of room {code}. Create a party or join with the code from the Pair
+          This tab is not part of room {code}. Create a duo or join with the code from the Duo
           screen.
         </StatusMessage>
-      </PageShell>
+      </main>
     );
   }
 
   if (connection === 'connecting' || !room.roomState) {
     return (
-      <PageShell title="Pair" backHref="/pair">
+      <main className="mx-auto flex w-[min(720px,calc(100%-1.5rem))] justify-center py-16">
         <StatusMessage>Joining room {code}…</StatusMessage>
-      </PageShell>
+      </main>
     );
   }
 
@@ -149,135 +150,132 @@ export function PairPhotobooth({ code }: { code: string }) {
   const localLabel = myRole === 'host' ? 'You (Host)' : 'You (Guest)';
   const remoteLabel = myRole === 'host' ? 'Your friend (Guest)' : 'Your friend (Host)';
 
+  const localPreview = (
+    <CameraPreview
+      bare
+      label={localLabel}
+      stream={camera.stream}
+      mirrored={camera.mirrored}
+      videoRef={videoRef}
+      countdownSeconds={booth.countdownSeconds}
+      badge={booth.activeShot ? `Shot ${booth.activeShot} of ${SHOTS_PER_SESSION}` : undefined}
+      placeholder={camera.status === 'requesting' ? 'Waiting for camera permission…' : 'Camera is off.'}
+    />
+  );
+  const remotePreview = (
+    <CameraPreview
+      bare
+      label={remoteLabel}
+      stream={peer.remoteStream}
+      placeholder={
+        waitingForFriend
+          ? 'Waiting for a friend to join.'
+          : peer.state === 'failed'
+            ? 'Could not connect to their camera.'
+            : 'Connecting to their camera…'
+      }
+    />
+  );
+
+  const shutterDisabled = !room.isHost || sequenceRunning || (!canStart && !canRetake);
+  const shutterLabel = sequenceRunning ? 'Taking photos' : sessionComplete ? 'Retake' : 'Take photos';
+
   return (
-    <PageShell title="Pair" backHref="/pair">
-      <div className="flex flex-col gap-6">
-        <PairStatus
-          roomState={roomState}
-          myRole={myRole}
-          connectionLabel={PEER_STATE_LABELS[peer.state] ?? 'Unknown'}
-          onLeave={() => void leave()}
-        />
-
-        {room.error ? <StatusMessage tone="error">{room.error.message}</StatusMessage> : null}
-        {camera.failure ? (
-          <StatusMessage
-            tone="error"
-            action={
-              camera.failure.retryable ? (
-                <Button variant="secondary" onClick={camera.retry}>
-                  Try again
-                </Button>
-              ) : null
-            }
-          >
-            {camera.failure.message}
-          </StatusMessage>
-        ) : null}
-        {peer.error ? (
-          <StatusMessage
-            tone="error"
-            action={
-              <Button variant="secondary" onClick={peer.restart}>
-                Reconnect
+    <main className="mx-auto flex w-full max-w-[1440px] flex-col items-center gap-6 px-3 py-8">
+      {room.error ? <StatusMessage tone="error">{room.error.message}</StatusMessage> : null}
+      {camera.failure ? (
+        <StatusMessage
+          tone="error"
+          action={
+            camera.failure.retryable ? (
+              <Button variant="secondary" onClick={camera.retry}>
+                Try again
               </Button>
-            }
-          >
-            {peer.error}
-          </StatusMessage>
-        ) : null}
-        {ice.degraded ? (
-          <StatusMessage>
-            Relay settings could not be loaded, so this connection may fail on restrictive networks.
-          </StatusMessage>
-        ) : null}
-        {booth.problem ? <StatusMessage tone="error">{booth.problem}</StatusMessage> : null}
-        {commandError ? <StatusMessage tone="error">{commandError}</StatusMessage> : null}
-        {saveError ? <StatusMessage tone="error">{saveError}</StatusMessage> : null}
+            ) : null
+          }
+        >
+          {camera.failure.message}
+        </StatusMessage>
+      ) : null}
+      {peer.error ? (
+        <StatusMessage
+          tone="error"
+          action={
+            <Button variant="secondary" onClick={peer.restart}>
+              Reconnect
+            </Button>
+          }
+        >
+          {peer.error}
+        </StatusMessage>
+      ) : null}
+      {ice.degraded ? (
+        <StatusMessage>
+          Relay settings could not be loaded, so this connection may fail on restrictive networks.
+        </StatusMessage>
+      ) : null}
+      {booth.problem ? <StatusMessage tone="error">{booth.problem}</StatusMessage> : null}
+      {commandError ? <StatusMessage tone="error">{commandError}</StatusMessage> : null}
+      {saveError ? <StatusMessage tone="error">{saveError}</StatusMessage> : null}
+      {booth.transferNote ? <StatusMessage>{booth.transferNote}</StatusMessage> : null}
+      {sessionComplete ? (
+        <StatusMessage tone="success">
+          All {SHOTS_PER_SESSION} frames are complete on both devices. You can download the strip.
+        </StatusMessage>
+      ) : null}
 
-        {waitingForFriend ? (
-          <StatusMessage>Waiting for a friend. Share the code above to let them in.</StatusMessage>
-        ) : null}
-        {booth.transferNote ? <StatusMessage>{booth.transferNote}</StatusMessage> : null}
-        {sessionComplete ? (
-          <StatusMessage tone="success">
-            All {SHOTS_PER_SESSION} frames are complete on both devices. You can download the strip.
-          </StatusMessage>
-        ) : null}
-
-        {/* Reading order on narrow screens: settings, cameras, strip, actions. */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(14rem,18rem)_minmax(0,1fr)_minmax(12rem,16rem)]">
-          <CameraSettings camera={camera} />
-
-          <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-            <CameraPreview
-              label={localLabel}
-              stream={camera.stream}
-              mirrored={camera.mirrored}
-              videoRef={videoRef}
-              countdownSeconds={booth.countdownSeconds}
-              badge={booth.activeShot ? `Shot ${booth.activeShot} of ${SHOTS_PER_SESSION}` : undefined}
-              placeholder={
-                camera.status === 'requesting' ? 'Waiting for camera permission…' : 'Camera is off.'
-              }
+      <BoothWindow
+        footer={
+          <div className="flex flex-col gap-4">
+            <PairStatus
+              roomState={roomState}
+              myRole={myRole}
+              connectionLabel={PEER_STATE_LABELS[peer.state] ?? 'Unknown'}
+              onLeave={() => void leave()}
             />
-            <CameraPreview
-              label={remoteLabel}
-              stream={peer.remoteStream}
-              placeholder={
+            <BoothShelf
+              mode="duo"
+              shutterLabel={shutterLabel}
+              shutterDisabled={shutterDisabled}
+              onShutter={() => {
+                if (canStart) void runCommand(room.startCapture);
+                else if (canRetake) void runCommand(room.retake);
+              }}
+              downloadLabel={isSaving ? 'Preparing…' : 'Download'}
+              downloadDisabled={!booth.completeSlots || isSaving}
+              onDownload={() => void download()}
+              note={
                 waitingForFriend
-                  ? 'Waiting for a friend to join.'
-                  : peer.state === 'failed'
-                    ? 'Could not connect to their camera.'
-                    : 'Connecting to their camera…'
+                  ? 'Waiting for a friend. Share the code so they can join. Host is on the left.'
+                  : room.isHost
+                    ? 'You start the photos. Host is on the left, guest on the right.'
+                    : 'The host starts and retakes the photo sequence. Host is on the left.'
               }
             />
-          </div>
-
-          <PhotoStripPreview slots={booth.slots} activeShot={booth.activeShot} />
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-300 pt-4">
-          <div className="flex flex-wrap items-center gap-3">
-            {room.isHost ? (
-              <>
-                <Button
-                  variant="primary"
-                  onClick={() => void runCommand(room.startCapture)}
-                  disabled={!canStart}
-                >
-                  {sequenceRunning ? 'Taking photos…' : 'Take photos'}
+            {room.isHost && canRetake ? (
+              <div className="text-center">
+                <Button variant="quiet" onClick={() => void runCommand(room.retake)} disabled={sequenceRunning}>
+                  Clear strip
                 </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => void runCommand(room.retake)}
-                  disabled={!canRetake}
-                >
-                  Retake
-                </Button>
-              </>
-            ) : (
-              <p className="text-sm text-zinc-700">
-                The host starts and retakes the photo sequence.
-              </p>
-            )}
+              </div>
+            ) : null}
           </div>
-
-          <Button
-            variant="primary"
-            onClick={() => void download()}
-            disabled={!booth.completeSlots || isSaving}
-          >
-            {isSaving ? 'Preparing PNG…' : 'Download PNG'}
-          </Button>
+        }
+      >
+        <div className="grid h-[42vh] min-h-64 max-h-[507px] grid-cols-1 divide-y divide-black sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+          {myRole === 'host' ? localPreview : remotePreview}
+          {myRole === 'host' ? remotePreview : localPreview}
         </div>
+      </BoothWindow>
 
-        <p className="max-w-prose text-xs text-zinc-600">
-          Photos travel directly between the two browsers and are never stored on the server. They
-          live in memory only: if you reload or leave before downloading, they are gone. On some
-          networks a relay server forwards the encrypted connection on your behalf.
-        </p>
-      </div>
-    </PageShell>
+      <PhotoStripPreview slots={booth.slots} activeShot={booth.activeShot} />
+
+      <details className="w-[min(988px,calc(100%-1.5rem))] rounded-[28px] border border-black bg-[rgba(243,243,243,0.74)] p-4">
+        <summary className="cursor-pointer text-lg tracking-[-0.05em]">Camera</summary>
+        <div className="pt-4">
+          <CameraSettings camera={camera} />
+        </div>
+      </details>
+    </main>
   );
 }

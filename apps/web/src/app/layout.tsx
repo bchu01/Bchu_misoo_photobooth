@@ -1,5 +1,10 @@
 import type { Metadata, Viewport } from 'next';
+import { Geist } from 'next/font/google';
+import { GradientField } from '@/components/brand/GradientField';
+import { SiteHeader } from '@/components/brand/SiteHeader';
 import './globals.css';
+
+const geist = Geist({ subsets: ['latin'], variable: '--font-geist' });
 
 export const metadata: Metadata = {
   title: 'Bchu Misoo Photobooth',
@@ -14,8 +19,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-dvh antialiased">{children}</body>
+    <html lang="en" className={geist.variable}>
+      <body className="min-h-dvh font-sans tracking-[-0.05em] antialiased">
+        <GradientField />
+        <SiteHeader />
+        {children}
+      </body>
     </html>
   );
 }

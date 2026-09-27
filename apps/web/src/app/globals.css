@@ -1,16 +1,18 @@
 @import 'tailwindcss';
 
 /*
- * Deliberately plain. The later Figma pass owns typography, colour, spacing, and
- * decoration; these tokens exist only so the functional build is legible and the
- * theme has one place to change.
+ * Visual system from the Figma frames: frosted panels, tight Geist type, and a
+ * blurred colour field. Layout stays fluid; the frames are a desktop composition,
+ * not a fixed page size.
  */
 @theme {
-  --color-surface: #ffffff;
-  --color-surface-muted: #f4f4f5;
-  --color-line: #d4d4d8;
-  --color-ink: #18181b;
-  --color-ink-muted: #52525b;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --color-ink: #000000;
+  --color-frost: rgba(243, 243, 243, 0.74);
+  --color-frost-strong: rgba(243, 243, 243, 0.67);
+  --color-stage: #d9d9d9;
+  --color-shutter-from: #526fff;
+  --color-shutter-to: #7dafff;
 }
 
 :root {
@@ -18,12 +20,12 @@
 }
 
 body {
-  background-color: var(--color-surface-muted);
+  background-color: #ffffff;
   color: var(--color-ink);
+  font-family: var(--font-sans);
 }
 
-/* Visible focus on every interactive element, not just where Tailwind adds it. */
 :focus-visible {
-  outline: 3px solid var(--color-ink);
-  outline-offset: 2px;
+  outline: 3px solid #000000;
+  outline-offset: 3px;
 }

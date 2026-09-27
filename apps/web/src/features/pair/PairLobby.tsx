@@ -12,8 +12,9 @@ import { useCallback, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ROOM_CODE_LENGTH, ROOM_CODE_PATTERN } from '@bchu/shared';
 import type { RoomMembership } from '@bchu/shared';
+import { BoothWindow } from '@/components/brand/BoothWindow';
+import { PillButton } from '@/components/brand/PillButton';
 import { StatusMessage } from '@/components/StatusMessage';
-import { Button } from '@/components/ui/Button';
 import { ensureConnected, getSocket, request } from '@/lib/socketClient';
 import { savePairSession } from './pairSessionStore';
 
@@ -72,41 +73,22 @@ export function PairLobby() {
   }, [code, enterRoom]);
 
   return (
-    <div className="flex flex-col gap-6">
-      {error ? <StatusMessage tone="error">{error}</StatusMessage> : null}
+    <main className="mx-auto flex w-full max-w-[1440px] flex-col items-center gap-6 px-3 py-8">
+      <BoothWindow
+        footer={
+          <div className="flex flex-col items-stretch justify-between gap-6 sm:flex-row sm:items-end">
+            <PillButton onClick={() => void createParty()} disabled={busy !== 'none'} className="sm:w-[248px]">
+              {busy === 'creating' ? 'Creating…' : 'Create a DUO'}
+            </PillButton>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <section aria-labelledby="create-heading" className="flex flex-col gap-3">
-          <h2 id="create-heading" className="text-lg font-semibold">
-            Create party
-          </h2>
-          <p className="text-sm text-zinc-700">
-            You become the host. You will get a six-character code to share, and only you can start
-            the photo sequence.
-          </p>
-          <Button
-            variant="primary"
-            className="self-start"
-            onClick={() => void createParty()}
-            disabled={busy !== 'none'}
-          >
-            {busy === 'creating' ? 'Creating…' : 'Create party'}
-          </Button>
-        </section>
-
-        <section aria-labelledby="join-heading" className="flex flex-col gap-3">
-          <h2 id="join-heading" className="text-lg font-semibold">
-            Join party
-          </h2>
-          <form
-            className="flex flex-col gap-3"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void joinParty();
-            }}
-          >
-            <div className="flex flex-col gap-1">
-              <label htmlFor="room-code" className="text-sm font-medium">
+            <form
+              className="flex w-full flex-col gap-3 sm:w-[248px]"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void joinParty();
+              }}
+            >
+              <label className="sr-only" htmlFor="room-code">
                 Party code
               </label>
               <input
@@ -119,26 +101,24 @@ export function PairLobby() {
                 autoComplete="off"
                 spellCheck={false}
                 inputMode="text"
-                placeholder="ABC234"
+                placeholder="######"
                 aria-describedby="room-code-hint"
-                className="min-h-11 w-full max-w-56 rounded-md border border-zinc-400 bg-white px-3 py-2 font-mono text-lg tracking-widest uppercase"
+                className="h-[75px] w-full rounded-[21px] border border-black bg-[#efefef] px-4 text-center text-3xl tracking-[0.31em] uppercase placeholder:tracking-[0.31em]"
               />
-              <p id="room-code-hint" className="text-xs text-zinc-600">
+              <p id="room-code-hint" className="sr-only">
                 Six letters or numbers, not case sensitive.
               </p>
-            </div>
-            <Button variant="primary" type="submit" className="self-start" disabled={busy !== 'none'}>
-              {busy === 'joining' ? 'Joining…' : 'Join'}
-            </Button>
-          </form>
-        </section>
-      </div>
-
-      <p className="max-w-prose text-xs text-zinc-600">
-        A party code is an invitation, not a password: anyone who has it can try to take the empty
-        second seat. Rooms hold two people, expire after 30 minutes, and disappear if the server
-        restarts.
-      </p>
-    </div>
+              <PillButton type="submit" disabled={busy !== 'none'}>
+                {busy === 'joining' ? 'Joining…' : 'Join a DUO'}
+              </PillButton>
+            </form>
+          </div>
+        }
+      >
+        <div className="flex h-[36vh] min-h-48 max-h-[420px] items-start justify-center p-4">
+          {error ? <StatusMessage tone="error">{error}</StatusMessage> : null}
+        </div>
+      </BoothWindow>
+    </main>
   );
 }
